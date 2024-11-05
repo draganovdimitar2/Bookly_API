@@ -19,12 +19,12 @@ class Book(SQLModel , table=True):
     __tablename__ = "books"
 
     uid: uuid.UUID = Field(
-        default_factory=uuid.uuid4,  # Automatically generate a new UUID
+        default_factory=uuid.uuid4,  # Automatically generate a new UUID for each book
         sa_column=Column(
-            pg.UUID,
-            primary_key=True,
-            unique=True,
-            nullable=False
+            pg.UUID,  # PostgreSQL-specific data type for UUID
+            primary_key=True,  # Set uid as the primary key (enforcing uniqueness automatically)
+            unique=True,  # Explicitly enforces uniqueness, though redundant on primary keys
+            nullable=False  # Prevents NULL values in the uid column, ensuring each Book has a UUID
         )
     )
 
