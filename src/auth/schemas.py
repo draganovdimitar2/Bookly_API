@@ -20,3 +20,7 @@ class UserModel(BaseModel):  # to return all of the info related to the specific
     password_hash: str = Field(exclude=True)  # this field should stay only to prevent returning the user password
     created_at: datetime
     updated_at: datetime
+
+class UserLoginModel(BaseModel):
+    email: str = Field(max_length=40)
+    password: str = Field(min_length=6)
