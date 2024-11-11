@@ -11,10 +11,11 @@ they must send a string in form of Bearer <token> in the request's Authorization
 """
 
 
-class AccessTokenBearer(HTTPBearer):
+class TokenBearer(HTTPBearer):
 
-    def __init__(self, auto_error = True):  # to determine the behaviour of our class if an error occurs
-        super().__init__(auto_error = auto_error)  # this is going to call the __init__ method of our parent class (HTTPBearer class)
+    def __init__(self, auto_error=True):  # to determine the behaviour of our class if an error occurs
+        super().__init__(
+            auto_error=auto_error)  # this is going to call the __init__ method of our parent class (HTTPBearer class)
 
     async def __call__(self, request: Request) -> HTTPAuthorizationCredentials:
         creds = await super().__call__(request)
@@ -25,20 +26,43 @@ class AccessTokenBearer(HTTPBearer):
 
         if not self.token_valid:
             raise HTTPException(
-                status_code = status.HTTP_403_FORBIDDEN,
+                status_code=status.HTTP_403_FORBIDDEN,
                 detail="Invalid or expired token!"
             )
 
-        if token_data["refresh"]:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Please provide an access token."
-            )
+        self.verify_token_data(token_data)
+
         return token_data
 
     def token_valid(self, token: str) -> bool:  # func to check whether our token is valid
 
-
         token_data = decode_token(token)
 
         return True if token_data else False
+
+    def verify_token_data(self, token_data):
+        raise NotImplementedError(
+            "Please Override this method in child classes")  # throwing an error if this method is not override
+
+
+class AccessTokenBearer(TokenBearer):
+
+    def verify_token_data(self,
+                          token_data: dict) -> None:  # throw an error if we provide refresh token instead of access token
+        if token_data and token_data["refresh"]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Please provide an access token."
+            )
+
+
+class RefreshTokenBearer(TokenBearer):  # func to create dependency
+
+    def verify_token_data(self,
+                          token_data: dict) -> None:
+        if token_data and not token_data[
+            "refresh"]:  # like the above func but here the refresh claim should be false
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Please provide a refresh token."
+            )
