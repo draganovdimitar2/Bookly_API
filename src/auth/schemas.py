@@ -1,5 +1,7 @@
 from pydantic import BaseModel, Field
+from src.books.schemas import Book
 import uuid
+from typing import List
 from datetime import datetime
 
 class UserCreateModel(BaseModel):
@@ -20,6 +22,7 @@ class UserModel(BaseModel):  # to return all of the info related to the specific
     password_hash: str = Field(exclude=True)  # this field should stay only to prevent returning the user password
     created_at: datetime
     updated_at: datetime
+    books: List[Book]
 
 class UserLoginModel(BaseModel):
     email: str = Field(max_length=40)

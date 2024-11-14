@@ -100,7 +100,7 @@ async def get_new_access_token(token_details: dict = Depends(RefreshTokenBearer(
     # in case it doesn't return that, it will raise an exception
     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='Invalid or expired token!')
 
-@auth_router.get('/me')  # return our currently logged user
+@auth_router.get('/me', response_model=UserModel)  # return current user 
 async def get_current_user(user = Depends(get_current_user), _: bool = Depends(role_checker)):
     return user
 
