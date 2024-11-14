@@ -1,6 +1,6 @@
 # Bookly
 
-**Description**: Bookly is a project where you can add, delete, update, and view book records. The goal is to build a robust book management REST API using FastAPI, integrating various essential features commonly needed in web applications.
+**Description**: Bookly is a web-based application designed for managing book records. Users can perform CRUD (Create, Read, Update, Delete) operations on books within a centralized database. The goal of the project is to build a robust and scalable book management REST API using FastAPI, incorporating essential web application features such as authentication, authorization, background tasks, email notifications, and more.
 
 This project is currently in progress, and I’ll be implementing it step-by-step, covering everything from initial setup to deployment.
 
@@ -40,6 +40,20 @@ To start Redis, use the following commands based on your operating system:
     ```bash
     redis-server
     ```
+
+- **Windows (Native Installation in PowerShell)**:
+  1. Navigate to the Redis installation directory (assuming `C:\Program Files\Redis`):
+     ```powershell
+     cd "C:\Program Files\Redis"
+     ```
+  2. Run the Redis server using:
+     ```powershell
+     .\redis-server.exe
+     ```
+
+   Alternatively, to run `redis-server` from any location in PowerShell:
+
+   - Add `C:\Program Files\Redis` to your system’s `PATH` environment variable. After adding it to `PATH`, you can simply type `redis-server` in PowerShell to start Redis.
 
 ### Redis Configuration
 
