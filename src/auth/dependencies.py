@@ -1,12 +1,17 @@
 from fastapi.exceptions import HTTPException
-from fastapi import Request, status
+from fastapi import Request, status, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from passlib.exc import InvalidTokenError
 from watchfiles import awatch
-
 from .utils import decode_token
 from src.db.redis import token_in_blocklist
+from src.db.main import get_session
+from sqlmodel.ext.asyncio.session import AsyncSession
+from .service import UserService
+from typing import List
+from .models import User
 
+user_service = UserService()
 
 """
 We need to protect our API endpoints such that users require to provide access tokens to access them. This is where HTTP Bearer Authentication comes in. 
@@ -22,7 +27,7 @@ class TokenBearer(HTTPBearer):
         super().__init__(
             auto_error=auto_error)  # this is going to call the __init__ method of our parent class (HTTPBearer class)
 
-    async def __call__(self, request: Request) -> HTTPAuthorizationCredentials:
+    async def __call__(self, request: Request) -> HTTPAuthorizationCredentials:  # __call__ method makes the class callable (like a func)
         creds = await super().__call__(request)
 
         token = creds.credentials  # to give access to our token
@@ -82,3 +87,28 @@ class RefreshTokenBearer(TokenBearer):  # func to create dependency
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Please provide a refresh token."  # in case we provide an access token instead of refresh token
             )
+
+
+async def get_current_user(token_details: dict = Depends(AccessTokenBearer()),  # identify the user from the token
+    session: AsyncSession = Depends(get_session)
+):
+    user_email = token_details['user']['email']  # extracts the user's email from the token_details
+
+    user = await user_service.get_user_by_email(user_email, session)
+
+    return user
+
+
+class RoleChecker:
+
+    def __init__(self, allowed_roles: List[str]) -> None:
+        self.allowed_roles = allowed_roles  # These will be the roles that are authorized to perform a certain action
+
+    def __call__(self, current_user: User = Depends(get_current_user)):
+        if current_user.role in self.allowed_roles:  # check if the user’s role is valid
+            return True  # indicating the user has permission
+
+        raise HTTPException(  # if the user’s role is not valid
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail='You are not allowed to perform this action!'
+        )

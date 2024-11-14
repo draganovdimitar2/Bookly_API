@@ -1,4 +1,5 @@
 import redis.asyncio as redis
+
 """
 If you are on windows, each time the application starts, you have to manually run the Redis server.
 """
@@ -9,6 +10,7 @@ JTI_EXPIRY = 3600
 token_blocklist = redis.Redis(
     host=Config.REDIS_HOST, port=Config.REDIS_PORT, db=0
 )
+
 
 async def add_jti_to_blocklist(jti: str) -> None:
     await token_blocklist.set(name=jti, value="", ex=JTI_EXPIRY)

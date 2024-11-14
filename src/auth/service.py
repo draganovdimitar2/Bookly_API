@@ -28,6 +28,7 @@ class UserService:
         )
 
         new_user.password_hash = generate_password_hash(user_data_dict['password'])  # to hash the user password
+        new_user.role = 'user'
 
         session.add(new_user)
 

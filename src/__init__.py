@@ -17,8 +17,7 @@ version = 'v1'  # This is the version of the API
 app = FastAPI(  # our web server
     title='Books',  # title of the API
     description='A job finder FAST API for books and organizations',  # decr of the API
-    version=version,  # The version of the API
-    lifespan=life_span
+    version=version  # The version of the API
 )
 
 app.include_router(book_router, prefix=f"/api/{version}/books", tags=['books'])  # to include routers in our main app
