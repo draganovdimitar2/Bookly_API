@@ -1,11 +1,11 @@
 from sqlmodel.ext.asyncio.session import AsyncSession
 from .schemas import BookCreateModel, BookUpdateModel
 from sqlmodel import select, desc
-from .models import Book
+from src.db.models import Book
 from datetime import datetime
 
 
-class BookService:
+class BookService:  # this class performs our CRUD related to books
     async def get_all_books(self, session: AsyncSession):
         statement = select(Book).order_by(desc(Book.created_at))
 

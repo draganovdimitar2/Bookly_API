@@ -1,6 +1,6 @@
 from fastapi import APIRouter, status, Depends
 from fastapi.exceptions import HTTPException
-from src.books.schemas import Book, BookUpdateModel, BookCreateModel
+from .schemas import Book, BookUpdateModel, BookCreateModel, BookDetailModel
 from sqlmodel.ext.asyncio.session import AsyncSession
 from src.books.service import BookService
 from src.db.main import get_session
@@ -41,11 +41,11 @@ async def create_a_book(
         token_details: dict = Depends(access_token_bearer)
 ) -> dict:
     user_id = token_details.get('user')['user_uid']  # each book is associated with the currently authenticated user's user_uid
-    new_book = await book_service.create_book(book_data, user_id, session)
+    new_book = await book_service.create_book(book_data, user_id, session)  # create a book with the user who added it
     return new_book
 
 
-@book_router.get("/{book_uid}", response_model=Book, dependencies=[role_checker])
+@book_router.get("/{book_uid}", response_model=BookDetailModel, dependencies=[role_checker])
 async def get_book(
         book_uid: str,
         session: AsyncSession = Depends(get_session),

@@ -1,6 +1,8 @@
 import uuid
 from pydantic import BaseModel
+from typing import List
 from datetime import date, datetime
+from src.reviews.schemas import ReviewModel
 
 
 class Book(BaseModel):
@@ -14,10 +16,10 @@ class Book(BaseModel):
     created_at: datetime
     updated_at: datetime
 
+class BookDetailModel(Book):
+    reviews: List[ReviewModel]
+
 class BookCreateModel(BaseModel):
-    """
-        This class is used to validate the request when creating or updating a book
-    """
     title: str
     author: str
     publisher: str
