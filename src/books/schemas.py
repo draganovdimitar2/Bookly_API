@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from typing import List
 from datetime import date, datetime
 from src.reviews.schemas import ReviewModel
+from src.tags.schemas import TagModel
 
 
 class Book(BaseModel):
@@ -16,8 +17,9 @@ class Book(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-class BookDetailModel(Book):
+class BookDetailModel(Book):  # book is returned with both -> tags and reviews
     reviews: List[ReviewModel]
+    tags:List[TagModel]
 
 class BookCreateModel(BaseModel):
     title: str
