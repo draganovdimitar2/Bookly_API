@@ -7,9 +7,8 @@ This project is currently in progress, and I’ll be implementing it step-by-ste
 ## Table of Contents
 
 1. [Getting Started](#getting-started)
-2. [Redis Setup](#redis-setup)
-3. [Project Setup](#project-setup)
-4. [Running the Application](#running-the-application)
+2. [Project Setup](#project-setup)
+3. [Running the Application](#running-the-application)
 
 
 ## Getting Started
@@ -20,60 +19,6 @@ Ensure you have the following installed:
 
 - Python >= 3.10
 - PostgreSQL
-- Redis
-
-## Redis Setup
-
-### Using WSL
-Install Redis in a WSL environment (Linux on Windows).
-
-### Starting Redis
-
-To start Redis, use the following commands based on your operating system:
-
-- **Linux/MacOS**:
-    ```bash
-    redis-server
-    ```
-
-- **Windows (via WSL)**:
-    ```bash
-    redis-server
-    ```
-
-- **Windows (Native Installation in PowerShell)**:
-  1. Navigate to the Redis installation directory (assuming `C:\Program Files\Redis`):
-     ```powershell
-     cd "C:\Program Files\Redis"
-     ```
-  2. Run the Redis server using:
-     ```powershell
-     .\redis-server.exe
-     ```
-
-   Alternatively, to run `redis-server` from any location in PowerShell:
-
-   - Add `C:\Program Files\Redis` to your system’s `PATH` environment variable. After adding it to `PATH`, you can simply type `redis-server` in PowerShell to start Redis.
-
-### Redis Configuration
-
-Ensure that your `.env` file contains the correct Redis configuration. Update the `.env` file with these settings:
-
-```env
-REDIS_HOST=localhost
-REDIS_PORT=6379
-```
-This configuration ensures that your application will be able to connect to Redis for caching and background tasks.
-
-### Example of .env File
-Here’s an example of what your .env file might look like:
-```env
-DATABASE_URL = postgresql+asyncpg://postgres:your_password@localhost:5432/booklydb
-JWT_SECRET = your_jwt_secret_key
-JWT_ALGORITHM = HS256
-REDIS_HOST = localhost
-REDIS_PORT = 6379
-```
 
 ## Project Setup
 1. Clone the project repository:
