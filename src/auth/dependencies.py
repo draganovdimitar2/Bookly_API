@@ -1,10 +1,8 @@
 from fastapi.exceptions import HTTPException
 from fastapi import Request, status, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from passlib.exc import InvalidTokenError
-from watchfiles import awatch
 from .utils import decode_token
-from src.db.redis import token_in_blocklist
+from src.db.blocklist import token_in_blocklist
 from src.db.main import get_session
 from sqlmodel.ext.asyncio.session import AsyncSession
 from .service import UserService
@@ -13,13 +11,6 @@ from src.db.models import User
 
 user_service = UserService()
 
-"""
-We need to protect our API endpoints such that users require to provide access tokens to access them. This is where HTTP Bearer Authentication comes in. 
-HTTP Bearer Authentication is an HTTP authentication scheme that involves security tokens called Bearer Tokens. This can be understood as 
-"give access to the bearer of the token". Everytime a client is to make a request to a protected endpoint, 
-they must send a string in form of Bearer <token> in the request's Authorization header.
-"""
-
 
 class TokenBearer(HTTPBearer):
 
@@ -27,7 +18,8 @@ class TokenBearer(HTTPBearer):
         super().__init__(
             auto_error=auto_error)  # this is going to call the __init__ method of our parent class (HTTPBearer class)
 
-    async def __call__(self, request: Request) -> HTTPAuthorizationCredentials:  # __call__ method makes the class callable (like a func)
+    async def __call__(self,
+                       request: Request) -> HTTPAuthorizationCredentials:  # __call__ method makes the class callable (like a func)
         creds = await super().__call__(request)
 
         token = creds.credentials  # to give access to our token
@@ -49,7 +41,6 @@ class TokenBearer(HTTPBearer):
                     "resolution": "Please get new token"  # hint for solving the problem
                 }
             )
-
 
         self.verify_token_data(token_data)
 
@@ -90,8 +81,8 @@ class RefreshTokenBearer(TokenBearer):  # func to create dependency
 
 
 async def get_current_user(token_details: dict = Depends(AccessTokenBearer()),  # identify the user from the token
-    session: AsyncSession = Depends(get_session)
-):
+                           session: AsyncSession = Depends(get_session)
+                           ):
     user_email = token_details['user']['email']  # extracts the user's email from the token_details
 
     user = await user_service.get_user_by_email(user_email, session)

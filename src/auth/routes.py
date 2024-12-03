@@ -8,7 +8,7 @@ from .utils import create_access_token, decode_token, verify_password
 from fastapi.responses import JSONResponse
 from datetime import timedelta, datetime
 from .dependencies import RefreshTokenBearer, AccessTokenBearer, get_current_user, RoleChecker
-from src.db.redis import add_jti_to_blocklist
+from src.db.blocklist import add_jti_to_blocklist
 
 auth_router = APIRouter()
 user_service = UserService()
