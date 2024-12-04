@@ -5,10 +5,7 @@ from src.config import Config
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from src.db.models import Book
 
-engine = create_async_engine(
-    url = Config.DATABASE_URL,
-    echo = True
-)
+engine = create_async_engine(url = Config.DATABASE_URL)
 
 async def init_db():  # this makes the connection to db
     async with engine.begin() as conn:

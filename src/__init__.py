@@ -5,6 +5,8 @@ from src.auth.routes import auth_router
 from src.reviews.routes import review_router
 from src.tags.routes import tags_router
 from .errors import register_all_errors
+from .middleware import register_middleware
+
 version = 'v1'  # This is the version of the API
 app = FastAPI(  # our web server
     title='Bookly',  # title of the API
@@ -13,6 +15,12 @@ app = FastAPI(  # our web server
 )
 
 register_all_errors(app)
+
+register_middleware(app)
+
+@app.get("/")
+async def read_root():
+    return {"message": "Hello World"}
 
 app.include_router(book_router, prefix=f"/api/{version}/books", tags=['books'])  # include routers in our main app
 app.include_router(auth_router, prefix=f"/api/{version}/auth", tags=['auth'])
