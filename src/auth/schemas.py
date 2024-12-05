@@ -5,6 +5,7 @@ import uuid
 from typing import List
 from datetime import datetime
 
+
 class UserCreateModel(BaseModel):
     first_name: str = Field(max_length=25)
     last_name: str = Field(max_length=25)
@@ -24,10 +25,16 @@ class UserModel(BaseModel):  # to return all of the info related to the specific
     created_at: datetime
     updated_at: datetime
 
+
 class UserBooksModel(UserModel):  # inherit from the class above
     books: List[Book]  # return a list of the books associated with the current user
     reviews: List[ReviewModel]
 
+
 class UserLoginModel(BaseModel):
     email: str = Field(max_length=40)
     password: str = Field(min_length=6)
+
+
+class EmailModel(BaseModel):
+    addresses : List[str]

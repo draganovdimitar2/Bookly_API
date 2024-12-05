@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, status
-from .schemas import UserCreateModel, UserModel, UserLoginModel, UserBooksModel
+from .schemas import UserCreateModel, UserModel, UserLoginModel, UserBooksModel, EmailModel
 from .service import UserService
 from src.db.main import get_session
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -10,12 +10,30 @@ from datetime import timedelta, datetime
 from .dependencies import RefreshTokenBearer, AccessTokenBearer, get_current_user, RoleChecker
 from src.db.blocklist import add_jti_to_blocklist
 from src.errors import UserAlreadyExists, UserNotFound, InvalidCredentials, InvalidToken
+from src.mail import mail, create_message
 
 auth_router = APIRouter()
 user_service = UserService()
 role_checker = RoleChecker(['admin', 'user'])
 
 REFRESH_TOKEN_EXPIRY = True
+
+
+@auth_router.post('/send_mail')
+async def send_mail(emails: EmailModel):
+    emails = emails.addresses
+
+    html = '<h1>Welcome to the app</h1>'
+
+    message = create_message(
+        recipients=emails,
+        subject="Welcome",
+        body=html
+    )
+
+    await mail.send_message(message)
+
+    return {'message':'Email send successfully'}
 
 
 @auth_router.post(
@@ -98,20 +116,21 @@ async def get_new_access_token(token_details: dict = Depends(RefreshTokenBearer(
     # in case it doesn't return that, it will raise an exception
     raise InvalidToken()
 
+
 @auth_router.get('/me', response_model=UserBooksModel)  # return the current user with a list of his books
-async def get_current_user(user = Depends(get_current_user), _: bool = Depends(role_checker)):
+async def get_current_user(user=Depends(get_current_user), _: bool = Depends(role_checker)):
     return user
+
 
 @auth_router.get('/logout')
 async def revoke_token(token_data: dict = Depends(AccessTokenBearer())):
-
     jti = token_data['jti']
 
     await add_jti_to_blocklist(jti)
 
     return JSONResponse(
         content={
-            'message':'Logged Out Successfully'
+            'message': 'Logged Out Successfully'
         },
         status_code=status.HTTP_200_OK
     )
