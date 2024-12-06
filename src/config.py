@@ -15,10 +15,15 @@ class Settings(BaseSettings):  # inherit from .env file
     MAIL_PORT: int
     MAIL_SERVER: str
     MAIL_FROM_NAME: str
-    MAIL_STARTTLS: bool = True
-    MAIL_SSL_TLS: bool = False
+    MAIL_STARTTLS: bool = False # set to True for Gmail | False for ABV
+    MAIL_SSL_TLS: bool = True  # set to False for Gmail | True for ABV
     USE_CREDENTIALS: bool = True
     VALIDATE_CERTS: bool = True
+    DOMAIN: str
 
+    model_config = SettingsConfigDict(
+        env_file='.env',
+        extra='ignore'  # ignore any extra attributes
+    )
 
 Config = Settings()

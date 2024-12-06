@@ -4,13 +4,6 @@ from typing import List, Optional
 from datetime import datetime, date
 import uuid
 
-"""
-The Relationship function establishes a two-way connection between the User and Book models, 
-with back_populates="user" indicating that each Book instance is linked back to the User instance that added it.
-The sa_relationship_kwargs={"lazy": "selectin"} parameter optimizes the query performance by loading related Book
-objects in a single query when the User object is accessed, reducing the number of database queries and improving efficiency.
-"""
-
 
 class User(SQLModel, table=True):
     __tablename__ = 'users'

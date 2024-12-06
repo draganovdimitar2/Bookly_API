@@ -4,6 +4,7 @@ from src.config import Config
 import jwt
 import uuid
 import logging
+from itsdangerous import URLSafeTimedSerializer
 
 passwd_context = CryptContext(
     schemes=['bcrypt']  # list of the algorithm used to hash the password
@@ -53,3 +54,27 @@ def decode_token(token: str) -> dict:  # to decode the token and check whether i
     except jwt.PyJWTError as e:  # in case we failed to decode the token
         logging.exception(e)  # to log the error
         return None  # return None if the token is not decoded
+
+
+serializer = URLSafeTimedSerializer(
+    secret_key=Config.JWT_SECRET,
+    salt='email-configuration'
+)
+
+
+def create_url_safe_token(data: dict):
+    """Serialize a dict into a URLSafe token"""
+    token = serializer.dumps(data)
+
+    return token
+
+
+def decode_url_safe_token(token: str):
+    """Deserialize a URLSafe token to get data"""
+    try:
+        token_data = serializer.loads(token)  # return the data that is decoded within our token
+
+        return token_data
+
+    except Exception as e:
+        logging.error(str(e))

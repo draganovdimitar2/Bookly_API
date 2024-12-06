@@ -1,11 +1,9 @@
-from fastapi import FastAPI, status
+from fastapi import FastAPI
 from fastapi.requests import Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 import time
 import logging
-
-from urllib3 import request
 
 logger = logging.getLogger('uvicorn.access')
 logger.disabled = True

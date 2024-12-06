@@ -1,5 +1,4 @@
-from fastapi.exceptions import HTTPException
-from fastapi import Request, status, Depends
+from fastapi import Request, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from .utils import decode_token
 from src.db.blocklist import token_in_blocklist
