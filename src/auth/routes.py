@@ -1,16 +1,50 @@
-from fastapi import APIRouter, Depends, status
-from .schemas import UserCreateModel, UserLoginModel, UserBooksModel, EmailModel
+from fastapi.exceptions import HTTPException
 from .service import UserService
 from sqlmodel.ext.asyncio.session import AsyncSession
-from .utils import create_access_token, verify_password, create_url_safe_token, decode_url_safe_token
 from fastapi.responses import JSONResponse
-from datetime import timedelta, datetime
-from .dependencies import RefreshTokenBearer, AccessTokenBearer, get_current_user, RoleChecker
 from src.db.blocklist import add_jti_to_blocklist
-from src.errors import UserAlreadyExists, UserNotFound, InvalidCredentials, InvalidToken
-from src.mail import mail, create_message
 from src.config import Config
 from src.db.main import get_session
+from fastapi import (
+    APIRouter,
+    Depends,
+    status
+)
+from .dependencies import (
+    RefreshTokenBearer,
+    AccessTokenBearer,
+    get_current_user,
+    RoleChecker
+)
+from .schemas import (
+    UserCreateModel,
+    UserLoginModel,
+    UserBooksModel,
+    EmailModel,
+    PasswordResetRequestModel,
+    PasswordResetConfirmModel
+)
+from .utils import (
+    create_access_token,
+    verify_password,
+    create_url_safe_token,
+    decode_url_safe_token,
+    generate_password_hash
+)
+from src.errors import (
+    UserAlreadyExists,
+    UserNotFound,
+    InvalidCredentials,
+    InvalidToken
+)
+from datetime import (
+    timedelta,
+    datetime
+)
+from src.mail import (
+    mail,
+    create_message
+)
 
 auth_router = APIRouter()
 user_service = UserService()
@@ -89,7 +123,8 @@ async def verify_user_account(token: str, session: AsyncSession = Depends(get_se
         if not user:
             raise UserNotFound()
 
-        await user_service.update_user(user, {"is_verified": True}, session)  # update is_verified to True in our database
+        await user_service.update_user(user, {"is_verified": True},
+                                       session)  # update is_verified to True in our database
 
         return JSONResponse(
             content={"message": "Account verified successfully"},
@@ -97,7 +132,7 @@ async def verify_user_account(token: str, session: AsyncSession = Depends(get_se
         )
 
     return JSONResponse(
-        content={'message':'An error occurred during verification'},
+        content={'message': 'An error occurred during verification'},
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
     )
 
@@ -177,4 +212,73 @@ async def revoke_token(token_data: dict = Depends(AccessTokenBearer())):
             'message': 'Logged Out Successfully'
         },
         status_code=status.HTTP_200_OK
+    )
+
+
+@auth_router.post("/password-reset-request")
+async def password_rest_request(email_data: PasswordResetRequestModel):
+    email = email_data.email
+
+    token = create_url_safe_token({"email": email})
+
+    link = f"http://{Config.DOMAIN}/api/v1/auth/password-reset-confirm/{token}"
+
+    html_message = f"""
+        <h1>Reset Your Password</h1>
+        <p>Please click this link <a href="{link}">link</a> to Reset Your Password</p>
+        """
+
+    message = create_message(
+        recipients=[email],
+        subject="Reset Your Password",
+        body=html_message
+    )
+
+    await mail.send_message(message)
+
+    return JSONResponse(
+        content={
+            "message": "Please check your email for instruction on how to reset your password"
+        },
+        status_code=status.HTTP_200_OK
+    )
+
+
+@auth_router.post('/password-reset-confirm/{token}')
+async def reset_account_password(
+        token: str,
+        passwords: PasswordResetConfirmModel,
+        session: AsyncSession = Depends(get_session)
+):
+    new_password = passwords.new_password  # make a variable for the new password
+    confirm_password = passwords.confirm_new_password  # make a variable for the confirm password
+
+    if new_password != confirm_password:  # if passwords do not match
+        raise HTTPException(
+            detail="Passwords do not match!",
+            status_code=status.HTTP_400_BAD_REQUEST
+        )
+
+    token_data = decode_url_safe_token(token)  # decode the token
+
+    user_email = token_data.get('email')  # get the email from the token
+
+    if user_email:  # if the email is not None
+        user = await user_service.get_user_by_email(user_email, session)  # get the user
+
+        if not user:  # if the user is not found raise an error
+            raise UserNotFound()
+
+        password_hash = generate_password_hash(new_password)  # to generate unreadable string of the new password
+        await user_service.update_user(user, {"password_hash": password_hash},
+                                       session)  # update the user with the new password
+
+        return JSONResponse(
+            content={"message": "Password reset Successfully!"},
+            status_code=status.HTTP_200_OK
+        )
+
+    return JSONResponse(
+        content={'message': 'An error occurred during password reset.'},
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
     )
