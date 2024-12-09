@@ -8,7 +8,8 @@ from src.db.main import get_session
 from fastapi import (
     APIRouter,
     Depends,
-    status
+    status,
+    BackgroundTasks
 )
 from .dependencies import (
     RefreshTokenBearer,
@@ -77,6 +78,7 @@ async def send_mail(emails: EmailModel):
 )
 async def create_user_Account(
         user_data: UserCreateModel,
+        bg_tasks: BackgroundTasks,
         session: AsyncSession = Depends(get_session)
 ):
     email = user_data.email
@@ -103,7 +105,7 @@ async def create_user_Account(
         body=html_message
     )
 
-    await mail.send_message(message)
+    bg_tasks.add_task(mail.send_message, message)  # using background task when sending emails so that it will take less time (to offload the task)
 
     return {
         "message": "Account Created! Check email to verify your account!",
