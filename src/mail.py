@@ -1,32 +1,23 @@
-from fastapi_mail import FastMail, ConnectionConfig, MessageSchema, MessageType
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
 from src.config import Config
-from pathlib import Path
-
-BASE_DIR = Path(__file__).resolve().parent
-
-
-mail_config = ConnectionConfig(
-    MAIL_USERNAME=Config.MAIL_USERNAME,
-    MAIL_PASSWORD=Config.MAIL_PASSWORD,
-    MAIL_FROM=Config.MAIL_FROM,
-    MAIL_PORT=465,  # 587 for gmail
-    MAIL_SERVER=Config.MAIL_SERVER,
-    MAIL_FROM_NAME=Config.MAIL_FROM_NAME,
-    MAIL_STARTTLS=False,  # set to True for Gmail | False for ABV
-    MAIL_SSL_TLS=True,  # set to False for Gmail | True for ABV
-    USE_CREDENTIALS=True,
-    VALIDATE_CERTS=True,
-    # TEMPLATE_FOLDER=Path(BASE_DIR, "templates"),
-)
-
-
-mail = FastMail(config=mail_config)
-
+import logging
 
 def create_message(recipients: list[str], subject: str, body: str):
-
-    message = MessageSchema(
-        recipients=recipients, subject=subject, body=body, subtype=MessageType.html
+    message = Mail(
+        from_email=(Config.MAIL_FROM, Config.MAIL_FROM_NAME),
+        to_emails=recipients,
+        subject=subject,
+        html_content=body
     )
-
     return message
+
+async def send_email(recipients: list[str], subject: str, body: str):
+    message = create_message(recipients, subject, body)
+    try:
+        sg = SendGridAPIClient(Config.SENDGRID_API_KEY)
+        response = sg.send(message)
+        logging.info(f"Email sent successfully: {response.status_code}")
+    except Exception as e:
+        logging.error(f"Failed to send email: {e}")
+        raise e  # Re-raise the exception to capture it in the logs

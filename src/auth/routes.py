@@ -43,8 +43,7 @@ from datetime import (
     datetime
 )
 from src.mail import (
-    mail,
-    create_message
+    send_email
 )
 
 auth_router = APIRouter()
@@ -55,20 +54,14 @@ REFRESH_TOKEN_EXPIRY = True
 
 
 @auth_router.post('/send_mail')
-async def send_mail(emails: EmailModel):
+async def send_mail(emails: EmailModel, background_tasks: BackgroundTasks):
     emails = emails.addresses
 
     html = '<h1>Welcome to the app</h1>'
 
-    message = create_message(
-        recipients=emails,
-        subject="Welcome",
-        body=html
-    )
+    background_tasks.add_task(send_email, emails, "Welcome", html)
 
-    await mail.send_message(message)
-
-    return {'message': 'Email send successfully'}
+    return {'message': 'Email sent successfully'}
 
 
 @auth_router.post(
@@ -99,13 +92,8 @@ async def create_user_Account(
     <p>Please click this link <a href="{link}">link</a> to verify your email</p>
     """
 
-    message = create_message(
-        recipients=[email],
-        subject="Verify your email",
-        body=html_message
-    )
-
-    bg_tasks.add_task(mail.send_message, message)  # using background task when sending emails so that it will take less time (to offload the task)
+    bg_tasks.add_task(send_email, [email], "Verify your email",
+                      html_message)  # using background task when sending emails so that it will take less time (to offload the task)
 
     return {
         "message": "Account Created! Check email to verify your account!",
@@ -218,7 +206,7 @@ async def revoke_token(token_data: dict = Depends(AccessTokenBearer())):
 
 
 @auth_router.post("/password-reset-request")
-async def password_rest_request(email_data: PasswordResetRequestModel):
+async def password_rest_request(email_data: PasswordResetRequestModel, background_tasks: BackgroundTasks):
     email = email_data.email
 
     token = create_url_safe_token({"email": email})
@@ -230,13 +218,7 @@ async def password_rest_request(email_data: PasswordResetRequestModel):
         <p>Please click this link <a href="{link}">link</a> to Reset Your Password</p>
         """
 
-    message = create_message(
-        recipients=[email],
-        subject="Reset Your Password",
-        body=html_message
-    )
-
-    await mail.send_message(message)
+    background_tasks.add_task(send_email, [email], "Reset Your Password", html_message)
 
     return JSONResponse(
         content={
