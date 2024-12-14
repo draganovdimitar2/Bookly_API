@@ -2,7 +2,7 @@
 
 **Description**: Bookly is a web-based application designed for managing book records. Users can perform CRUD (Create, Read, Update, Delete) operations on books within a centralized database. The goal of the project is to build a robust and scalable book management REST API using FastAPI, incorporating essential web application features such as authentication, authorization, background tasks, email notifications, and more.
 
-This project is currently in progress, and I’ll be implementing it step-by-step, covering everything from initial setup to deployment.
+This project is complete and deployed on Render. You can access the live API documentation at https://bookly-api-ymlo.onrender.com/api/v1/docs.
 
 ## Table of Contents
 
