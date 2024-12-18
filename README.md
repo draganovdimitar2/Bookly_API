@@ -42,29 +42,15 @@ Ensure you have the following installed:
     pip install -r requirements.txt
     ```
 
-5. Set up environment variables by copying the example configuration:
-    ```bash
-    cp .env.example .env
-    ```
-
-6. Run database migrations to initialize the database schema:
+5. Run database migrations to initialize the database schema:
     ```bash
     alembic upgrade head
-    ```
-
-7. Open a new terminal and ensure your virtual environment is active. Start the Celery worker (Linux/Unix shell):
-    ```bash
-    sh runworker.sh
     ```
 
 ## Running the application
 Start the application:
 ```bash
 fastapi dev src/
-```
-Alternatively, you can run the application using Docker:
-```bash
-docker compose up -d
 ```
 
 ## License
