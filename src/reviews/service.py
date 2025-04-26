@@ -1,24 +1,24 @@
 from src.db.models import Review
-from src.auth.service import UserService
-from src.books.service import BookService
 from sqlmodel.ext.asyncio.session import AsyncSession
 from fastapi.exceptions import HTTPException
 from fastapi import status
 from .schemas import ReviewCreateModel
 from ..auth.routes import user_service
 from ..books.routes import book_service
-import logging
+from azure.servicebus.aio import ServiceBusClient
+from azure.servicebus import ServiceBusMessage
 
-book_service = BookService()
-user_service = UserService()
+from src.config import Config
 
 
-class ReviewService:  # this class performs our CRUD related to reviews
+class ReviewService:
+    def __init__(self):
+        self.connection_string = Config.AZURE_SERVICE_BUS_CONNECTION_STRING
+        self.queue_name = Config.AZURE_SERVICE_BUS_QUEUE_NAME
 
-    async def add_review_to_book(self, user_email: str, book_uid: str, review_data: ReviewCreateModel,
-                                 session: AsyncSession):
+    async def add_review_to_book(self, user_email: str, book_uid: str, review_data: ReviewCreateModel, session: AsyncSession):
         try:
-            book = await book_service.get_book(  # try to get the book
+            book = await book_service.get_book(
                 book_uid=book_uid,
                 session=session
             )
@@ -26,36 +26,47 @@ class ReviewService:  # this class performs our CRUD related to reviews
                 email=user_email,
                 session=session
             )
-            review_data_dict = review_data.model_dump()  # dict representation of the review data
-            new_review = Review(
-                **review_data_dict  # unpack the review data dict
-            )
 
-            if not book:  # in case book is not found
+            if not book:  # If book is not found
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail='Book not found'
                 )
 
-            if not user:  # in case user is not found
+            if not user:  # If user is not found
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail='User not found'
                 )
+            review_data_dict = review_data.dict()
+            new_review = Review(  # create a new Review instance
+                **review_data_dict
+            )
+            new_review.user = user  # associate review with the user
+            new_review.book = book  # associate review with the book
+            session.add(new_review)
+            await session.commit()
 
-            new_review.user = user  # associate the review to the user who created it
-
-            new_review.book = book  # associate the review to the current book
-
-            session.add(new_review)  # add the new_review instance
-
-            await session.commit()  # commit new_review to the database
+            # Step 5: Notify the book uploader via Azure Service Bus
+            await self.send_service_bus_message(book.title, review_data.review_text)
 
             return new_review
-
         except Exception as e:
-            logging.exception(e)
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Oops ... Something went wrong!"
-            )
+            print(f"Error adding review to book: {e}")
+            raise
+
+    async def send_service_bus_message(self, book_name: str, review_content: str):
+        try:
+            print("Attempt to connect to Azure Service Bus.")
+            async with ServiceBusClient.from_connection_string(self.connection_string) as client:
+                print("Attempt to get the queue name")
+                sender = client.get_queue_sender(queue_name=self.queue_name)
+                async with sender:
+                    print("Making the message")
+                    message = ServiceBusMessage(f"{book_name}|{review_content}")
+                    print("Trying to send to message")
+                    await sender.send_messages(message)
+                    print("Message sent to Azure Service Bus.")
+        except Exception as e:
+            print(f"Error sending message to Azure Service Bus: {e}")
+            raise

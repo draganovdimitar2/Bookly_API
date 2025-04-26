@@ -4,7 +4,14 @@ from src.auth.routes import auth_router
 from src.reviews.routes import review_router
 from src.tags.routes import tags_router
 from .errors import register_all_errors
-from .middleware import register_middleware
+import asyncio
+from src.reviews.service import ReviewService
+from src.notifications.consumer import NotificationConsumer
+from src.config import Config
+from src.middleware import register_middleware
+
+review_service = ReviewService()
+notification_consumer = NotificationConsumer()
 
 version = 'v1'  # This is the version of the API
 version_prefix = f"/api/{version}"
@@ -21,6 +28,15 @@ app = FastAPI(  # our web server
     docs_url=f"{version_prefix}/docs",
     redoc_url=f"{version_prefix}/redoc"
 )
+
+
+@app.on_event("startup")
+async def startup_event():
+    """
+    Start the Azure Service Bus listener in the background when the application starts.
+    """
+    asyncio.create_task(notification_consumer.process_messages())
+
 
 register_all_errors(app)
 
